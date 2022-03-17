@@ -142,12 +142,12 @@
 // Uncomment this if you want debug messages
 //#define DEBUG
 
-unsigned long time       	= 0;
-unsigned long last_time  	= 0;
-byte Speed 			= 1;
+unsigned long time         = 0;
+unsigned long last_time   = 0;
+byte Speed      = 1;
 
-byte first_time       = 1;	// used for 4-bit (0 2 3 5) input reading - reset all variables
-  			        // when 4-bit address value changes (except the first time on power up)
+byte first_time       = 1;  // used for 4-bit (0 2 3 5) input reading - reset all variables
+                // when 4-bit address value changes (except the first time on power up)
 byte DigInState       = 0;
 byte lastDigInState;  //= 0;
   
@@ -197,13 +197,13 @@ Assign the pins from the 328p to LedControl
  pin D6 is connected to LOAD 
  We have two MAX7221 on the Magic Panel, so we use 2.
  */
-LedControl lc=LedControl(8,7,6,2);
+LedControl lc=LedControl(12,11,10,1);
 
 unsigned long delaytime=30;
 unsigned long scrolldelaytime=50;
 
 boolean VMagicPanel[8][8];  // [Row][Col]
-unsigned char MagicPanel[16];
+unsigned char MagicPanel[8];
 int NumLoops=2;
 
 //Serial Stuff
@@ -232,14 +232,12 @@ void setup()
    we have to do a wakeup call
    */
   lc.shutdown(0,false);
-  lc.shutdown(1,false);
+
   /* Set the brightness to a medium values */
   lc.setIntensity(0,15);
-  lc.setIntensity(1,15);
   
   /* and clear the display */
   lc.clearDisplay(0);
-  lc.clearDisplay(1);
 
   randomSeed(analogRead(A3));           // Randomizer
 
@@ -248,66 +246,18 @@ void setup()
   
   // SETUP 6 DIGITAL PINS FOR MANUAL CONTROL
   
-  // Jumpe Pins
-  pinMode(11, INPUT);             // set pin 11 to input - input 3  
-  pinMode(12, OUTPUT);            // set pin PB4 to output - pin 4 - used to allow a jumper from pin 4 to adjacent pin to pull down the adjacent pin
-  pinMode(13, INPUT);             // set pin 13 to input - input 5
-
-
-  digitalWrite(A0, HIGH);         // turn on pullup resistors
-  digitalWrite(A1, HIGH);         // turn on pullup resistors
-  digitalWrite(A2, HIGH);         // turn on pullup resistors
-  
-  digitalWrite(11, HIGH);         // turn on pullup resistors
-  digitalWrite(13, HIGH);         // turn on pullup resistors
-
-  digitalWrite(12, LOW);         // set pin PC1 to output - pin 1
-  ////digitalWrite(A1, LOW);         // set pin PB4 to output - pin 4
 }
 
 void loop() { 
 
-  time = millis();		        // get an updated time stamp
-  if (time - last_time > Speed)  	// check if time has passed to change states - used to slow down the main loop
+  time = millis();            // get an updated time stamp
+  if (time - last_time > Speed)   // check if time has passed to change states - used to slow down the main loop
   {
-    last_time = time;			// reset the timer
+    last_time = time;     // reset the timer
     
-   //***********************************************
-   // These are the Binary Coded Input Pins
-   //   
-    DigInState = 0;			// read in the 4-bit address line
-    if (digitalRead(A0) == LOW)        	// 0
-    { DigInState = DigInState + 4; }
-    if (digitalRead(A1) == LOW)        	// 1
-    { DigInState = DigInState + 2; }
-    if (digitalRead(A2) == LOW)       	// 2
-    { DigInState = DigInState + 1; }
-   
-   
-   //***********************************************
-   // These are the Jumper Pins
-   //
-    if (digitalRead(11) == LOW)        	// 3
-    { DigInState = 8;    }              // if Jumper-1 is Placed - Don't look at Rotary Sw Values
-    if (digitalRead(13) == LOW)        	// 5
-    { DigInState = 9;    }              // if Jumper-2 is Placed - Don't look at any other Input Values
-      
-    if(first_time)
+    switch (DigInState)     // Call the appropriate code routine - based on the input address values of the control lines A B C
     {
-      lastDigInState = DigInState;	// dont allow a change in DigInState values if this is the first time through
-      first_time = 0;
-    }
-
-    if (DigInState != lastDigInState)  	//if DigInState has changed...
-    {
-       blankPANEL();                    // Clear LED's
-    }
-
-    lastDigInState = DigInState;	// Store the current Input Status  
-      
-    switch (DigInState)			// Call the appropriate code routine - based on the input address values of the control lines A B C
-    {
-       case 0: 			        // DO NOTHING - ALLOW I2C FUNCTIONS TO OVER-RIDE 6-PIN INPUT
+       case 0:              // DO NOTHING - ALLOW I2C FUNCTIONS TO OVER-RIDE 6-PIN INPUT
        {
         
         ///////////////////////////////////
@@ -323,68 +273,7 @@ void loop() {
          
           break;
        }
-       case 1: 			        // FADE IN AND OUT: 
-       {  allOFF();
-          FadeOutIn(1);
-          allOFF();
-          break;
-       }
-       case 2: 			        // RANDOM FAST: 
-       {  
-          allOFF();
-          FlashAll(8, 200);
-          allOFF();
-          break;
-       }
-       case 3: 			        // 2 LOOP: 
-       {  
-          allOFF();
-          TwoLoop(2);
-          allOFF();
-          break;
-       }
-       case 4: 			        // TRACE DOWN: 
-       {  
-          allOFF();
-          TraceDown(5,1);
-          allOFF();
-          break;
-       }
-       case 5: 			        // ONE TEST: 
-       {  
-          allOFF();
-          OneTest(30);
-          allOFF();
-          break;
-       }   
-       case 6: 			        // Random Fast: 
-       {  
-          Random(random(8000,14000));
-          break;
-       }
-       case 7: 			        // RANDOM SLOW: 
-       {
-          Random(random(40000,60000));    // 5 to 8 minute interval between light patterns
-          break;
-       }
-        case 8: 			// Jumper 1  : 
-       {  
-          allONTimed(0);   
-          break;
-       }
-       case 9: 			        // Jumper 2  : 
-       {  
-          Random(random(8000,14000));  // 1 to 2 min interval between light patterns
-          break;
-       }
-
-       default:
-       {                                // OFF: 
-          allOFF();                     // Clear LED's
-          break;
-       }
     }//end switch,\
-
 
     // End the current Pattern if there is one being "played"
     // This replaces the use of delay() which is a blocking call.
@@ -1136,18 +1025,19 @@ void Cross(){
 
 void MapBoolGrid(){
   for(int Row=0; Row<8; Row++){
-    MagicPanel[2*Row]=128*VMagicPanel[Row][7]+64*VMagicPanel[Row][6]+32*VMagicPanel[Row][5]+16*VMagicPanel[Row][4];       // 0, 2, 4, 6, 8, 10, 12, 14
-    MagicPanel[2*Row+1]=8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
+    MagicPanel[Row]=128*VMagicPanel[Row][7]+64*VMagicPanel[Row][6]+32*VMagicPanel[Row][5]+16*VMagicPanel[Row][4]+8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];       // 0, 2, 4, 6, 8, 10, 12, 14
+    //MagicPanel[2*Row+1]=8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
   }
 }
 
 void PrintGrid(){
-  for(int i=0; i<16; i++){
+  for(int i=0; i<8; i++){
     if(i<8){
       lc.setRow(0, i, MagicPanel[i]);
-    }else{
-      lc.setRow(1, i-8, MagicPanel[i]);
-    }
+//      lc.setColumn(0, i, MagicPanel[7-i]);      
+    }//else{
+      //lc.setRow(1, i-8, MagicPanel[i]);
+    //}
   }
 }
 
