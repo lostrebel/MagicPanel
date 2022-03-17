@@ -124,6 +124,14 @@
 #include "Wire.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////  Select your MagicPanel hardware here  ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//#define MP_IAPARTS_V1
+//#define MP_IAPARTS_V2
+//#define MP_IAPARTS_V3
+#define MP_RODDBOTICS_V2
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////  Assign IC2 Address Below   //////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    byte I2CAdress = 20;
@@ -142,15 +150,10 @@
 // Uncomment this if you want debug messages
 //#define DEBUG
 
-unsigned long time         = 0;
-unsigned long last_time   = 0;
-byte Speed      = 1;
+unsigned long time       	= 0;
+unsigned long last_time  	= 0;
+byte Speed 			= 1;
 
-byte first_time       = 1;  // used for 4-bit (0 2 3 5) input reading - reset all variables
-                // when 4-bit address value changes (except the first time on power up)
-byte DigInState       = 0;
-byte lastDigInState;  //= 0;
-  
 // State Variables
 
 int AlertTime       = 0;
@@ -175,35 +178,167 @@ unsigned long RandomTime = 0;
 //unsigned long RandomInterval = 0;     // time between function calls
 unsigned long RandomOnTime = 0;
 
-/*
-To load a sketch onto Magic Panel as Arduino Duemilanove w/ ATmega328
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// To load a sketch onto Magic Panel as Arduino Duemilanove w/ ATmega328
+//
+// Now we need a LedControl to work with.
+// ***** These pin numbers will probably not work with your hardware *****
+//
+// MAX7221
+// Pin 1 - Data IN
+// Pin 12 - Load
+// Pin 13 - CLK
+// Pin 24 - Data Out
+//
+// Top 7221    = 0
+// Bottom 7221 = 1
+//
+// Assign the pins from the ATMega328p to LedControl
+// 
+// pin D8 is connected to the DataIn 
+// pin D7 is connected to the CLK 
+// pin D6 is connected to LOAD 
+// We have two MAX7221 on the Magic Panel, so we use 2 for device count.
+//
+// --------------------------------------------------------------
+// RoddBotics Magic Panel v2.1 using 1 Max7221 and Arduino Nano
+// --------------------------------------------------------------
+// pin D12 is connected to the DataIn 
+// pin D11 is connected to the CLK 
+// pin D10 is connected to LOAD
+// 
+//
 
- Now we need a LedControl to work with.
- ***** These pin numbers will probably not work with your hardware *****
+#if defined(MP_IAPARTS_V1) || defined(MP_IAPARTS_V2) || defined(MP_IAPARTS_V3)
+# define TWO_MAX_CHIPS
+# define HAVE_JUMPERS
+# define HAVE_DIGITAL_CMD_INPUT
 
-7221
-Pin 1 - Data IN
-Pin 12 - Load
-Pin 13 - CLK
-Pin 24 - Data Out
+LedControl lc = LedControl(8,7,6,2);
 
-Top 7221 = 0
-Bottom 7221 =1
+#elif defined(MP_RODDBOTICS_V2)
 
-Assign the pins from the 328p to LedControl
- 
- pin D8 is connected to the DataIn 
- pin D7 is connected to the CLK 
- pin D6 is connected to LOAD 
- We have two MAX7221 on the Magic Panel, so we use 2.
- */
-LedControl lc=LedControl(12,11,10,1);
+LedControl lc = LedControl(12,11,10,1);
+
+#else
+
+hardware not defined
+
+#endif
+
+#if defined(HAVE_DIGITAL_CMD_INPUT) || defined(HAVE_JUMPERS)
+bool first_time       = true;	// used for 4-bit (0 2 3 5) input reading - reset all variables
+  			        // when 4-bit address value changes (except the first time on power up)
+byte DigInState       = 0;
+byte lastDigInState;
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Board Layout and MAX chip mapping
+//
+// The physical and logical layout of the pixels need not match. This sketch
+// uses a virtual pixel array (VMagicPanel) for the code to draw in and then maps
+// that to byte array bitmap (MagicPanel) used when calling the LedControl
+// routines which handle the MAX chip interface.
+//
+// IA-Parts
+// --------
+// The IA-Parts boards have two MAX chips, each driving 4 rows
+// Each half row of pixels is driven by one row in the MAX chip
+//
+// So the physical layout is
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R0  R0  R0  R0  R0  R0  R0  R0
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R1  R1  R1  R1  R1  R1  R1  R1
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R2  R2  R2  R2  R2  R2  R2  R2
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R3  R3  R3  R3  R3  R3  R3  R3
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R4  R4  R4  R4  R4  R4  R4  R4
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R5  R5  R5  R5  R5  R5  R5  R5
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R6  R6  R6  R6  R6  R6  R6  R6
+//
+//     C7  C6  C5  C4  C3  C2  C1  C0
+//     R7  R7  R7  R7  R7  R7  R7  R7
+//
+// The chip grid layout is:
+//
+// Chip      Chip 0 Column               Chip      Chip 1 Column
+// Row  7   6   5   4   3   2   1   0    Row  7   6   5   4   3   2   1   0
+//  0  C7  C6  C5  C4                     0  C7  C6  C5  C4
+//     R0  R0  R0  R0                        R4  R4  R4  R4
+//  1                  C3  C2  C1  C0     1                  C3  C2  C1  C0
+//                     R0  R0  R0  R0                        R4  R4  R4  R4
+//  2  C7  C6  C5  C4                     2  C7  C6  C5  C4
+//     R1  R1  R1  R1                        R5  R5  R5  R5
+//  3                  C3  C2  C1  C0     3                  C3  C2  C1  C0
+//                     R1  R1  R1  R1                        R5  R5  R5  R5
+//  4  C7  C6  C5  C4                     4  C7  C6  C5  C4
+//     R2  R2  R2  R2                        R6  R6  R6  R6
+//  5                  C3  C2  C1  C0     5                  C3  C2  C1  C0
+//                     R2  R2  R2  R2                        R6  R6  R6  R6
+//  6  C7  C6  C5  C4                     6  C7  C6  C5  C4
+//     R3  R3  R3  R3                        R7  R7  R7  R7
+//  7                  C3  C2  C1  C0     7                  C3  C2  C1  C0
+//                     R3  R3  R3  R3                        R7  R7  R7  R7
+//
+// Note: there is no harm in trying to address chip pixels that have no
+//       corresponding physical led. So writing B11111111 to Chip 0, Row 0
+//       has the same effect as writing B11110000, turning on Row 0 pixels
+//       C4, C5, C6, and C7.
+//
+// RoddBotics
+// ----------
+//
+// The Roddbotics boards have one MAX chip so conceptually easier to deal with except the
+// the row/column layout is rotated. MapBoolGrid takes care of rotating the matrix just before
+// output so you don't need to care. 
+//
+// The chip grid layout is:
+//
+// Chip      Chip 0 Column               
+// Row  7   6   5   4   3   2   1   0    
+//  0  C0  C0  C0  C0  C0  C0  C0  C0                        
+//     R0  R1  R2  R3  R4  R5  R6  R7                        
+//  1  C1  C1  C1  C1  C1  C1  C1  C1                        
+//     R0  R1  R2  R3  R4  R5  R1  R7 
+//  2  C2  C2  C2  C2  C2  C2  C2  C2
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//  3  C3  C3  C3  C3  C3  C3  C3  C3
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//  4  C4  C4  C4  C4  C4  C4  C4  C4
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//  5  C5  C5  C5  C5  C5  C5  C5  C5
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//  6  C6  C6  C6  C6  C6  C6  C6  C6
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//  7  C7  C7  C7  C7  C7  C7  C7  C7
+//     R0  R1  R2  R3  R4  R5  R6  R7
+//
+// 
+
+#ifdef TWO_MAX_CHIPS
+byte MagicPanel[16]; // The 1D array representing the state of each half row
+#else
+byte MagicPanel[8];  // The 1D array representing the state of each whole row
+#endif 
+boolean VMagicPanel[8][8];    // The 2D array of logical pixels
+
 
 unsigned long delaytime=30;
 unsigned long scrolldelaytime=50;
 
-boolean VMagicPanel[8][8];  // [Row][Col]
-unsigned char MagicPanel[8];
 int NumLoops=2;
 
 //Serial Stuff
@@ -227,17 +362,28 @@ void setup()
   // Setup the Serial Interface
   Serial.begin(9600);
   inputString.reserve(200);
-  /*
-   The MAX72XX is in power-saving mode on startup,
-   we have to do a wakeup call
-   */
-  lc.shutdown(0,false);
 
-  /* Set the brightness to a medium values */
-  lc.setIntensity(0,15);
-  
-  /* and clear the display */
+  /*
+   * The MAX72XX is in power-saving mode on startup,
+   * We have to:
+   *  1. do a wakeup call,
+   *  2. set the LED brightness
+   *  3. and clear the display 
+   */
+  lc.shutdown(0, false);
+#ifdef TWO_MAX_CHIPS  
+  lc.shutdown(1, false);
+#endif  
+
+  lc.setIntensity(0, 15);
+#ifdef TWO_MAX_CHIPS  
+  lc.setIntensity(1, 15);
+#endif
+
   lc.clearDisplay(0);
+#ifdef TWO_MAX_CHIPS  
+  lc.clearDisplay(1);
+#endif
 
   randomSeed(analogRead(A3));           // Randomizer
 
@@ -245,19 +391,76 @@ void setup()
   TheTest(30);
   
   // SETUP 6 DIGITAL PINS FOR MANUAL CONTROL
+#ifdef HAVE_JUMPERS  
+# if defined(MP_IAPARTS_V1) || defined(MP_IAPARTS_V2) || defined(MP_IAPARTS_V3)
+  // Jumper Pins used by MP_IAPARTS_*
+  pinMode(11, INPUT);             // set pin 11 to input - input 3  
+  pinMode(12, OUTPUT);            // set pin PB4 to output - pin 4 - used to allow a jumper from pin 4 to adjacent pin to pull down the adjacent pin
+  pinMode(13, INPUT);             // set pin 13 to input - input 5
+
+  digitalWrite(11, HIGH);         // turn on pullup resistors
+  digitalWrite(13, HIGH);         // turn on pullup resistors
+  digitalWrite(12, LOW);          // set pin PC1 to output - pin 1
+# endif /* MP_IAPARTS_* */
+#endif /* HAVE_JUMPERS */
   
+#ifdef HAVE_DIGITAL_CMD_INPUT
+# if defined(MP_IAPARTS_V1) || defined(MP_IAPARTS_V2) || defined(MP_IAPARTS_V3)
+  digitalWrite(A0, HIGH);         // turn on pullup resistors
+  digitalWrite(A1, HIGH);         // turn on pullup resistors
+  digitalWrite(A2, HIGH);         // turn on pullup resistors
+# endif /* MP_IAPARTS_* */
+#endif /* HAVE_DIGITAL_CMD_INPUT */
 }
 
 void loop() { 
 
-  time = millis();            // get an updated time stamp
-  if (time - last_time > Speed)   // check if time has passed to change states - used to slow down the main loop
+  time = millis();		        // get an updated time stamp
+  if (time - last_time > Speed)  	// check if time has passed to change states - used to slow down the main loop
   {
-    last_time = time;     // reset the timer
-    
-    switch (DigInState)     // Call the appropriate code routine - based on the input address values of the control lines A B C
+    last_time = time;			// reset the timer
+
+#if defined(HAVE_DIGITAL_CMD_INPUT) || defined(HAVE_JUMPERS)
+    DigInState = 0;
+# ifdef HAVE_DIGITAL_CMD_INPUT
+    //***********************************************
+    // These are the Binary Coded Input Pins
+    //   
+    DigInState = 0;			// read in the 4-bit address line
+    if (digitalRead(A0) == LOW)        	// 0
+    { DigInState = DigInState + 4; }
+    if (digitalRead(A1) == LOW)        	// 1
+    { DigInState = DigInState + 2; }
+    if (digitalRead(A2) == LOW)       	// 2
+    { DigInState = DigInState + 1; }
+# endif /* HAVE_DIGITAL_CMD_INPUT */
+
+# ifdef HAVE_JUMPERS
+   //***********************************************
+   // These are the Jumper Pins
+   //
+    if (digitalRead(11) == LOW)        	// 3
+    { DigInState = 8;    }              // if Jumper-1 is Placed - Don't look at Rotary Sw Values
+    if (digitalRead(13) == LOW)        	// 5
+    { DigInState = 9;    }              // if Jumper-2 is Placed - Don't look at any other Input Values
+# endif /* HAVE_JUMPERS */
+      
+    if(first_time)
     {
-       case 0:              // DO NOTHING - ALLOW I2C FUNCTIONS TO OVER-RIDE 6-PIN INPUT
+      lastDigInState = DigInState;	// dont allow a change in DigInState values if this is the first time through
+      first_time = 0;
+    }
+
+    if (DigInState != lastDigInState)  	//if DigInState has changed...
+    {
+       blankPANEL();                    // Clear LED's
+    }
+
+    lastDigInState = DigInState;	// Store the current Input Status  
+      
+    switch (DigInState)			// Call the appropriate code routine - based on the input address values of the control lines A B C
+    {
+       case 0: 			        // DO NOTHING - ALLOW I2C FUNCTIONS TO OVER-RIDE 6-PIN INPUT
        {
         
         ///////////////////////////////////
@@ -273,7 +476,68 @@ void loop() {
          
           break;
        }
-    }//end switch,\
+       case 1: 			        // FADE IN AND OUT: 
+       {  allOFF();
+          FadeOutIn(1);
+          allOFF();
+          break;
+       }
+       case 2: 			        // RANDOM FAST: 
+       {  
+          allOFF();
+          FlashAll(8, 200);
+          allOFF();
+          break;
+       }
+       case 3: 			        // 2 LOOP: 
+       {  
+          allOFF();
+          TwoLoop(2);
+          allOFF();
+          break;
+       }
+       case 4: 			        // TRACE DOWN: 
+       {  
+          allOFF();
+          TraceDown(5,1);
+          allOFF();
+          break;
+       }
+       case 5: 			        // ONE TEST: 
+       {  
+          allOFF();
+          OneTest(30);
+          allOFF();
+          break;
+       }   
+       case 6: 			        // Random Fast: 
+       {  
+          Random(random(8000,14000));
+          break;
+       }
+       case 7: 			        // RANDOM SLOW: 
+       {
+          Random(random(40000,60000));    // 5 to 8 minute interval between light patterns
+          break;
+       }
+        case 8: 			// Jumper 1  : 
+       {  
+          allONTimed(0);   
+          break;
+       }
+       case 9: 			        // Jumper 2  : 
+       {  
+          Random(random(8000,14000));  // 1 to 2 min interval between light patterns
+          break;
+       }
+
+       default:
+       {                                // OFF: 
+          allOFF();                     // Clear LED's
+          break;
+       }
+    }//end switch
+#endif /* HAVE_DIGITAL_CMD_INPUT || HAVE_JUMPERS */
 
     // End the current Pattern if there is one being "played"
     // This replaces the use of delay() which is a blocking call.
@@ -1023,23 +1287,55 @@ void Cross(){
   delay(3000);
 }
 
-void MapBoolGrid(){
-  for(int Row=0; Row<8; Row++){
-    MagicPanel[Row]=128*VMagicPanel[Row][7]+64*VMagicPanel[Row][6]+32*VMagicPanel[Row][5]+16*VMagicPanel[Row][4]+8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];       // 0, 2, 4, 6, 8, 10, 12, 14
-    //MagicPanel[2*Row+1]=8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MapBoolGrid
+//
+// Map the Virtual 2D pixel grid to the 1D byte array that is used to write to the MAX chip(s).
+// This routine does any transformations needed like mapping to multiple MAX chips (IA-Parts hardware)
+// or screen rotation (RoddBotics hardware)
+//
+
+void MapBoolGrid()
+{
+  for(int Row = 0; Row < 8; Row++)
+  {
+#ifdef TWO_MAX_CHIPS
+    MagicPanel[2*Row]=128*VMagicPanel[Row][7]+64*VMagicPanel[Row][6]+32*VMagicPanel[Row][5]+16*VMagicPanel[Row][4];       // 0, 2, 4, 6, 8, 10, 12, 14
+    MagicPanel[2*Row+1]=8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
+#else
+# ifdef MP_RODDBOTICS_V2
+    /*
+     * V2 PCB has X/Y rotated 90 clockwise so transpose the matrix 90 anti-clockwise
+     */
+    MagicPanel[Row]=VMagicPanel[7][Row]+2*VMagicPanel[6][Row]+4*VMagicPanel[5][Row]+8*VMagicPanel[4][Row]+
+      16*VMagicPanel[3][Row]+32*VMagicPanel[2][Row]+64*VMagicPanel[1][Row]+128*VMagicPanel[0][Row];
+# endif
+#endif
   }
 }
 
-void PrintGrid(){
-  for(int i=0; i<8; i++){
-    if(i<8){
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// PrintGrid
+//
+// PrintGrid invokes the LedControl routines to push the state to the MAX chips.
+
+void PrintGrid()
+{
+#ifdef TWO_MAX_CHIPS  
+  for(int i = 0; i < 8 * 2; i++)
+  {
+    if(i < 8)
       lc.setRow(0, i, MagicPanel[i]);
-//      lc.setColumn(0, i, MagicPanel[7-i]);      
-    }//else{
-      //lc.setRow(1, i-8, MagicPanel[i]);
-    //}
+    else
+      lc.setRow(1, i-8, MagicPanel[i]);
   }
+#else
+  for(int i = 0; i < 8; i++)
+    lc.setRow(0, i, MagicPanel[i]);
+#endif
 }
+
 
 void SetRow(int LEDRow, unsigned char RowState){
   for(int Col=0; Col<8; Col++){
@@ -2247,9 +2543,17 @@ void VUMeter(int loops, int type) {
 //// End The Jugg1er sequences //////
 /////////////////////////////////////
 
-void blankPANEL() {
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// blankPANEL
+//
+// blank the display
+
+void blankPANEL()
+{
   lc.clearDisplay(0);
+#ifdef TWO_MAX_CHIPS  
   lc.clearDisplay(1);
+#endif  
 }
 
 // The following takes the Pattern code, and executes the relevant function
@@ -2946,4 +3250,4 @@ void serialEvent() {
        }
     }
     sei();
- }
+}
