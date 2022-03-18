@@ -943,7 +943,7 @@ void loop()
       DigInState = 9;                   // if Jumper-2 is Placed - Random Pattern Mode
 # endif /* HAVE_JUMPERS */    
 
-    if(first_time)
+    if (first_time)
     {
       lastDigInState = DigInState;	// dont allow a change in DigInState values if this is the first time through
       first_time = false;
@@ -1041,7 +1041,7 @@ void loop()
     if (alwaysOn && (lastMPeventCode > 4))
       RunPattern(lastMPeventCode);
 
-  }// end of if(time...)
+  }// end of if (time...)
 }
 
 
@@ -1133,7 +1133,7 @@ void RandomPattern(int IntervalMS)
       if (RandomDurationMS > 0)
         RunPattern(RandomPatternNum);
 
-      if(time_ms >= RandomPatternStartTimeMS + RandomDurationMS) 
+      if (time_ms >= RandomPatternStartTimeMS + RandomDurationMS) 
         RandomState++;     // proceed to next state
 
       break;
@@ -1165,18 +1165,18 @@ void RandomPattern(int IntervalMS)
 
 void MapBoolGrid()
 {
-  for(int Row = 0; Row < MP_ROWS; Row++)
+  for (int row = 0; row < MP_ROWS; row++)
   {
 #ifdef TWO_MAX_CHIPS
-    MagicPanel[2*Row]=128*VMagicPanel[Row][7]+64*VMagicPanel[Row][6]+32*VMagicPanel[Row][5]+16*VMagicPanel[Row][4];       // 0, 2, 4, 6, 8, 10, 12, 14
-    MagicPanel[2*Row+1]=8*VMagicPanel[Row][3]+4*VMagicPanel[Row][2]+2*VMagicPanel[Row][1]+VMagicPanel[Row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
+    MagicPanel[2*row]=128*VMagicPanel[row][7]+64*VMagicPanel[row][6]+32*VMagicPanel[row][5]+16*VMagicPanel[row][4];       // 0, 2, 4, 6, 8, 10, 12, 14
+    MagicPanel[2*row+1]=8*VMagicPanel[row][3]+4*VMagicPanel[row][2]+2*VMagicPanel[row][1]+VMagicPanel[row][0];            // 1, 3, 5, 7, 9, 11, 13, 15
 #else
 # ifdef MP_RODDBOTICS_V2
     /*
      * V2 PCB has X/Y rotated 90 clockwise so transpose the matrix 90 anti-clockwise
      */
-    MagicPanel[Row]=VMagicPanel[7][Row]+2*VMagicPanel[6][Row]+4*VMagicPanel[5][Row]+8*VMagicPanel[4][Row]+
-      16*VMagicPanel[3][Row]+32*VMagicPanel[2][Row]+64*VMagicPanel[1][Row]+128*VMagicPanel[0][Row];
+    MagicPanel[row]=VMagicPanel[7][row]+2*VMagicPanel[6][row]+4*VMagicPanel[5][row]+8*VMagicPanel[4][row]+
+      16*VMagicPanel[3][row]+32*VMagicPanel[2][row]+64*VMagicPanel[1][row]+128*VMagicPanel[0][row];
 # endif
 #endif    
   }
@@ -1193,15 +1193,15 @@ void PrintGrid()
   MapBoolGrid();
   
 #ifdef TWO_MAX_CHIPS  
-  for(int i = 0; i < MP_ROWS * 2; i++)
+  for (int i = 0; i < MP_ROWS * 2; i++)
   {
-    if(i < MP_ROWS)
+    if (i < MP_ROWS)
       lc.setRow(0, i, MagicPanel[i]);
     else
       lc.setRow(1, i-8, MagicPanel[i]);
   }
 #else
-  for(int i = 0; i < MP_ROWS; i++)
+  for (int i = 0; i < MP_ROWS; i++)
     lc.setRow(0, i, MagicPanel[i]);
 #endif
 }
@@ -1214,14 +1214,14 @@ void PrintGrid()
 
 void SetRow(int LEDRow, unsigned char RowState)
 {
-  for(int Col = 0; Col < MP_COLS; Col++)
-    VMagicPanel[LEDRow][Col] = ((RowState >> Col) & 1);
+  for (int col = 0; col < MP_COLS; col++)
+    VMagicPanel[LEDRow][col] = ((RowState >> col) & 1);
 }
 
 void SetCol(int LEDCol, unsigned char ColState)
 {
-  for(int Row = 0; Row < MP_ROWS; Row++)
-    VMagicPanel[Row][LEDCol] = ((ColState >> Row) & 1);
+  for (int row = 0; row < MP_ROWS; row++)
+    VMagicPanel[row][LEDCol] = ((ColState >> row) & 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1246,9 +1246,8 @@ void ClearPixel(int LEDRow, int LEDCol)
 // contains MP_ROWS worth of row data in PROGMEM.
 void LoadPmemPanel(byte *panel)
 {
-  for(int j = 0; j < MP_ROWS; j++)
-    SetRow(j, pgm_read_byte(panel+j));
-
+  for (int row = 0; row < MP_ROWS; row++)
+    SetRow(row, pgm_read_byte(panel + row));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1258,18 +1257,19 @@ void LoadPmemPanel(byte *panel)
 // Turn on all pixels one by one row by row
 void TheTest(int FlashDelayMS)
 {
-  for(int row = 0; row < MP_ROWS; row++)
+  for (int row = 0; row < MP_ROWS; row++)
   {
-    for(int col = 0; col < MP_COLS; col++)
+    for (int col = 0; col < MP_COLS; col++)
     {
       SetPixel(row, col);
       PrintGrid();
       delay(FlashDelayMS);
     }
   }
-  for(int row = 0; row < MP_ROWS; row++)
+  
+  for (int row = 0; row < MP_ROWS; row++)
   {
-    for(int col = 0; col < MP_COLS; col++)
+    for (int col = 0; col < MP_COLS; col++)
     {
       ClearPixel(row, col);
       PrintGrid();
@@ -1281,9 +1281,9 @@ void TheTest(int FlashDelayMS)
 // Turn on and off pixels one by one row by row
 void OneTest(int FlashDelayMS)
 {
-  for(int row = 0; row < MP_ROWS; row++)
+  for (int row = 0; row < MP_ROWS; row++)
   {
-    for(int col = 0; col < MP_COLS; col++)
+    for (int col = 0; col < MP_COLS; col++)
     {
       SetPixel(row, col);
       PrintGrid();
@@ -1325,9 +1325,9 @@ void turnOff()
 
 void allON()
 {
-  for(int row = 0; row < MP_ROWS; row++)
+  for (int row = 0; row < MP_ROWS; row++)
   {
-    for(int col = 0; col < MP_COLS; col++)
+    for (int col = 0; col < MP_COLS; col++)
     {
       VMagicPanel[row][col] = true;
     }
@@ -1337,9 +1337,9 @@ void allON()
 
 void allOFF()
 {
-  for(int row = 0; row < MP_ROWS; row++)
+  for (int row = 0; row < MP_ROWS; row++)
   {
-    for(int col = 0; col < MP_COLS; col++)
+    for (int col = 0; col < MP_COLS; col++)
     {
       VMagicPanel[row][col] = false;
     }
@@ -1356,9 +1356,9 @@ void allOFF()
 // which is inspected in the main loop to terminate the pattern.
 
 void allONTimed(int timer) 
-{ 
+{
   allOFF();
-  for(int row = 0;row < MP_ROWS; row++)      
+  for (int row = 0; row < MP_ROWS; row++)      
     SetRow(row, B11111111);
 
   PrintGrid();
@@ -1378,23 +1378,23 @@ void allONTimed(int timer)
 
 void EyeScan(int Repeats, int FlashDelayMS)
 {
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
-    for(int j = 0; j < MP_ROWS; j++)
+    for (int i = 0; i < MP_ROWS; i++)
     {
-      SetRow(j, B11111111);
+      SetRow(i, B11111111);
       PrintGrid();
       delay(FlashDelayMS);
-      SetRow(j, B00000000);
+      SetRow(i, B00000000);
     }
     allOFF();
     delay(FlashDelayMS);
-    for(int j = 0; j < MP_COLS; j++)
+    for (int i = 0; i < MP_COLS; i++)
     {
-      SetCol(MP_COLS - 1 - j, B11111111);
+      SetCol(MP_COLS - 1 - i, B11111111);
       PrintGrid();
       delay(FlashDelayMS);
-      SetCol(MP_COLS - 1 - j, B00000000);
+      SetCol(MP_COLS - 1 - i, B00000000);
     }
     allOFF();
     delay(FlashDelayMS);
@@ -1421,26 +1421,26 @@ void Cylon(int Repeats, int FlashDelayMS, enum PatternCylonMode Mode)
 {
   void (*rowcolFn)(int, unsigned char); // Fn ptr for the set row or col procedure
   
-  if(Mode == CylonModeLeftRight)                  /* Left-Right */
+  if (Mode == CylonModeLeftRight)                  /* Left-Right */
     rowcolFn = SetCol;
   else                                         /* Up-Down */
     rowcolFn = SetRow;
   
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
-    for(int j = 0; j < MP_ROWS; j++)
+    for (int i = 0; i < MP_ROWS; i++)
     {
-      rowcolFn(j, B11111111);
+      rowcolFn(i, B11111111);
       PrintGrid();
       delay(FlashDelayMS);
-      rowcolFn(j, B00000000);
+      rowcolFn(i, B00000000);
     }
-    for(int j = 0; j < MP_ROWS - 2; j++)
+    for (int i = 0; i < MP_ROWS - 2; i++)
     {
-      rowcolFn(MP_ROWS - 2 - j, B11111111);
+      rowcolFn(MP_ROWS - 2 - i, B11111111);
       PrintGrid();
       delay(FlashDelayMS);
-      rowcolFn(MP_ROWS - 2 - j, B00000000);
+      rowcolFn(MP_ROWS - 2 - i, B00000000);
     }
   }
 }
@@ -1481,19 +1481,19 @@ void Flash(int Repeats, int FlashDelayMS, enum PatternFlashMode Mode)
     patternB = B11110000;
   }
 
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
-    for(int j = 0; j < MP_ROWS/2; j++)
+    for (int i = 0; i < MP_ROWS/2; i++)
     {
-      rowcolFn(j, patternA);
-      rowcolFn(j+(MP_ROWS/2), patternB);
+      rowcolFn(i, patternA);
+      rowcolFn(i+(MP_ROWS/2), patternB);
     }
     PrintGrid();
     delay(FlashDelayMS);
-    for(int j = 0; j < MP_ROWS/2; j++)                /* Now invert the pattern */
+    for (int i = 0; i < MP_ROWS/2; i++)                /* Now invert the pattern */
     {
-      rowcolFn(j, ~patternA);
-      rowcolFn(j+(MP_ROWS/2), ~patternB);
+      rowcolFn(i, ~patternA);
+      rowcolFn(i+(MP_ROWS/2), ~patternB);
     }
     PrintGrid();
     delay(FlashDelayMS);
@@ -1526,7 +1526,7 @@ void Flash(int Repeats, int FlashDelayMS, enum PatternFlashMode Mode)
 void Looper(int Repeats, enum PatternLoopMode Mode)
 {
   int i;
-  boolean two = (Mode == LoopModeTwo) ? true : false;
+  boolean twoMode = (Mode == LoopModeTwo) ? true : false;
   int x_steps = MP_COLS - 2;
   int y_steps = MP_ROWS - 4;
   int x_max = MP_COLS - 2;
@@ -1535,50 +1535,50 @@ void Looper(int Repeats, enum PatternLoopMode Mode)
 #define LOOPER_DELAY_X 100
 #define LOOPER_DELAY_Y 150
   
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
-    for(i = 0; i < x_steps; i++)
+    for (i = 0; i < x_steps; i++)
     {
       SetPixel(1, y_max - i);
-      if(two)
+      if (twoMode)
         SetPixel(x_max, (1 + i));
       PrintGrid();
       delay(LOOPER_DELAY_X);
       ClearPixel(1, y_max - i);      
-      if(two)
+      if (twoMode)
         ClearPixel(x_max, (1 + i));
     }
-    for(i = 0; i < y_steps; i++) 
+    for (i = 0; i < y_steps; i++) 
     {
       SetPixel(2 + i, 1);
-      if(two)
+      if (twoMode)
         SetPixel(x_max - 1 - i, y_max);
       PrintGrid();
       delay(LOOPER_DELAY_Y);
       ClearPixel(2 + i, 1);
-      if(two)
+      if (twoMode)
         ClearPixel(x_max - 1 - i, y_max);
     }
-    for(i = 0; i < x_steps; i++)
+    for (i = 0; i < x_steps; i++)
     {
       SetPixel(x_max, (1 + i));
-      if(two)
+      if (twoMode)
         SetPixel(1, y_max - i);
       PrintGrid();
       delay(LOOPER_DELAY_X);
       ClearPixel(x_max, (1 + i));
-      if(two)
+      if (twoMode)
         ClearPixel(1, y_max - i);
     }
-    for(i = 0; i < y_steps; i++) 
+    for (i = 0; i < y_steps; i++) 
     {
       SetPixel(x_max - 1 - i, y_max);
-      if(two)
+      if (twoMode)
         SetPixel(2 + i, 1);
       PrintGrid();
       delay(LOOPER_DELAY_Y);
       ClearPixel(x_max - 1 - i, y_max);
-      if(two)
+      if (twoMode)
         ClearPixel(2 + i, 1);
     }
   }
@@ -1607,20 +1607,19 @@ void Looper(int Repeats, enum PatternLoopMode Mode)
 
 void FadeOutIn(enum PatternFadeOutInMode Mode)
 {
+  unsigned char rowstate;
+
 #define FADE_OUTIN_DELAY_MS  150
 #define FADE_OUTIN_NUMLOOPS  2   // Run each step this many loops
 #define FADE_OUTIN_FADESTEPS 5   // pixel density changes in this many steps
 #define FADE_OUTIN_RANDMAX   256  
-  unsigned char rowstate;
-  int loopi, rowi;
-  int fade_step;
   
   /*
    * This loop starts the pattern with high density random pixels
    */
-  for(int loopi = 0; loopi < 2 * FADE_OUTIN_NUMLOOPS; loopi++)
+  for (int loopi = 0; loopi < 2 * FADE_OUTIN_NUMLOOPS; loopi++)
   {
-    for(int rowi = 0; rowi < MP_ROWS; rowi++)
+    for (int rowi = 0; rowi < MP_ROWS; rowi++)
       SetRow(rowi, (random(FADE_OUTIN_RANDMAX)|random(FADE_OUTIN_RANDMAX)));
     PrintGrid();
     delay(FADE_OUTIN_DELAY_MS);
@@ -1631,14 +1630,14 @@ void FadeOutIn(enum PatternFadeOutInMode Mode)
    * This loop sets pixels in decreasing density
    * by and'ing random numbers 
    */
-  for(fade_step = 0; fade_step <= FADE_OUTIN_FADESTEPS; fade_step++)
+  for (int fade_step = 0; fade_step <= FADE_OUTIN_FADESTEPS; fade_step++)
   {
-    for(loopi = 0; loopi < FADE_OUTIN_NUMLOOPS; loopi++)
+    for (int loopi = 0; loopi < FADE_OUTIN_NUMLOOPS; loopi++)
     {
-      for(rowi = 0; rowi < MP_ROWS; rowi++)
+      for (int rowi = 0; rowi < MP_ROWS; rowi++)
       {
         rowstate = random(FADE_OUTIN_RANDMAX);
-        for(int i = 0; i < fade_step; i++)
+        for (int i = 0; i < fade_step; i++)
           rowstate &= random(FADE_OUTIN_RANDMAX);
         
         SetRow(rowi, rowstate);
@@ -1657,14 +1656,14 @@ void FadeOutIn(enum PatternFadeOutInMode Mode)
      * This loop sets pixels in increasing density,
      * and'ing random numbers 
      */
-    for(fade_step = FADE_OUTIN_FADESTEPS; fade_step >= 0; fade_step--)
+    for (int fade_step = FADE_OUTIN_FADESTEPS; fade_step >= 0; fade_step--)
     {
-      for(loopi = 0; loopi < FADE_OUTIN_NUMLOOPS; loopi++)
+      for (int loopi = 0; loopi < FADE_OUTIN_NUMLOOPS; loopi++)
       {
-        for(rowi = 0; rowi < MP_ROWS; rowi++)
+        for (int rowi = 0; rowi < MP_ROWS; rowi++)
         {
           rowstate = random(FADE_OUTIN_RANDMAX);
-          for(int i = fade_step; i > 0; i--)
+          for (int i = fade_step; i > 0; i--)
             rowstate &= random(FADE_OUTIN_RANDMAX);
           
           SetRow(rowi, rowstate);
@@ -1677,9 +1676,9 @@ void FadeOutIn(enum PatternFadeOutInMode Mode)
     /*
      * This loop ends the pattern with high density random pixels
      */
-    for(loopi = 0; loopi < 2 * FADE_OUTIN_NUMLOOPS; loopi++)
+    for (int loopi = 0; loopi < 2 * FADE_OUTIN_NUMLOOPS; loopi++)
     {
-      for(rowi = 0; rowi < MP_ROWS; rowi++)
+      for (int rowi = 0; rowi < MP_ROWS; rowi++)
         SetRow(rowi, (random(FADE_OUTIN_RANDMAX)|random(FADE_OUTIN_RANDMAX)));
       PrintGrid();
       delay(FADE_OUTIN_DELAY_MS);
@@ -1700,7 +1699,6 @@ void FadeOutIn(enum PatternFadeOutInMode Mode)
 
 void Symbol()
 {
-
   LoadPmemPanel(&symFaceTable[MP_ROWS * SymFaceIA]);
   PrintGrid();
   delay(SYMBOL_DELAY_MS);
@@ -1779,22 +1777,22 @@ void Trace(int Repeats, enum PatternTraceMode Mode, enum PatternCommonFillOpt Fi
   lineInc = 1;
 
   /* Up and Left decrement from 7 */
-  if(Mode == TraceModeUp || Mode == TraceModeLeft)
+  if (Mode == TraceModeUp || Mode == TraceModeLeft)
   {
     startline = 7;
     lineInc = -1;
   }
   
   /* Left and Right paint the columns not rows */
-  if(Mode == TraceModeLeft || Mode == TraceModeRight)
+  if (Mode == TraceModeLeft || Mode == TraceModeRight)
     rowcolFn = SetCol;
 
   
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
     line = startline;
     
-    for(int i = 0; i < MP_ROWS; i++) 
+    for (int i = 0; i < MP_ROWS; i++) 
     {
       rowcolFn(line, patternA);
       PrintGrid();
@@ -1820,12 +1818,11 @@ void Trace(int Repeats, enum PatternTraceMode Mode, enum PatternCommonFillOpt Fi
 
 void RandomPixel(int Repeats)
 {
-  int randRow;
-  int randCol;
+  int randRow, randCol;
 
 #define RANDOM_PIXEL_DELAY_MS 150
   
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
     randRow = random(0,7);
     randCol = random(0,7);
@@ -1856,23 +1853,24 @@ void RandomPixel(int Repeats)
 
 void Quadrant(int Repeats, enum PatternQuadrantMode Mode)
 {
-#define QUADRANT_DELAY_MS 200  
   int panel;
 
-  if(Mode >= QUADRANT_SEQUENCE_COUNT) /* Sanity check: Sequence num valid? */
+#define QUADRANT_DELAY_MS 200  
+
+  if (Mode >= QUADRANT_SEQUENCE_COUNT) /* Sanity check: Sequence num valid? */
     return;
 
-  for( int i = 0; i < 4; i++)
+  for (int i = 0; i < QUADRANT_SEQUENCE_LENGTH; i++)
   {
     panel = pgm_read_byte(&(quadrantSequenceTable[(QUADRANT_SEQUENCE_LENGTH * Mode) + i]));
 
-    if(panel >= QUADRANT_TABLE_PANEL_COUNT) /* Sanity check: Panel num valid? */
+    if (panel >= QUADRANT_TABLE_PANEL_COUNT) /* Sanity check: Panel num valid? */
       return;
   }
   
-  for( int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
-    for( int i = 0; i < 4; i++)
+    for (int i = 0; i < QUADRANT_SEQUENCE_LENGTH; i++)
     {
       panel = pgm_read_byte(&(quadrantSequenceTable[(QUADRANT_SEQUENCE_LENGTH * Mode) + i]));
       LoadPmemPanel(&quadrantTable[MP_ROWS * panel]);
@@ -1889,39 +1887,40 @@ void Quadrant(int Repeats, enum PatternQuadrantMode Mode)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExpandCompress (FlthyMcNsty)
 //
-// Expand a box out or Compress a box in with Fill or NoFill
-// opt: Expand or Compress
-// Mode: Fill or No Fill
+// Expand a box out or Compress a box in with Fill or NoFill.
+// Rebound mode is Expand plus Compress in each rep.
+//
+// Mode: Expand or Compress or Rebound
+// FillOpt: Fill or No Fill
 
 void ExpandCompress(int Repeats, enum PatternExpandCompressMode Mode, enum PatternCommonFillOpt FillOpt )
 {
-#define EXPAND_DELAY 200
   int panel, panelInc, startPanel;
+
+#define EXPAND_DELAY 200
 
   startPanel = 0;
   panelInc = 1;
   
-  if(Mode == ExpandCompressModeCompress)
+  if (Mode == ExpandCompressModeCompress)
   {
     startPanel = EXPAND_COMPRESS_TABLE_FRAMES - 1;
     panelInc = -1;
   }
   
-  for(int reps = 0; reps < Repeats; reps++)
+  for (int reps = 0; reps < Repeats; reps++)
   {
     panel = startPanel;
-    for(int i = 0; i < EXPAND_COMPRESS_TABLE_FRAMES; i++)
+    for (int i = 0; i < EXPAND_COMPRESS_TABLE_FRAMES; i++)
     {
       LoadPmemPanel(&expandTable[MP_ROWS * EXPAND_COMPRESS_TABLE_FRAMES * FillOpt + MP_ROWS * panel]);
       PrintGrid();
       delay(EXPAND_DELAY);
       panel += panelInc;
     }
-    if(Mode == ExpandCompressModeRebound)
+    if (Mode == ExpandCompressModeRebound)
     {
-      panel = 3;
-      
-      for(panel = EXPAND_COMPRESS_TABLE_FRAMES - 1; panel >= 0; panel--)
+      for (panel = EXPAND_COMPRESS_TABLE_FRAMES - 1; panel >= 0; panel--)
       {
         LoadPmemPanel(&expandTable[MP_ROWS * EXPAND_COMPRESS_TABLE_FRAMES * FillOpt + MP_ROWS * panel]);
         PrintGrid();
@@ -1944,7 +1943,7 @@ void MySymbol()
 {
 #define MYSYMBOL_DELAY_MS 1000
 
-  for(int panel = 0; panel < FLTHY_PANEL_COUNT; panel++)
+  for (int panel = 0; panel < FLTHY_PANEL_COUNT; panel++)
   {
     LoadPmemPanel(&flthyTable[MP_ROWS * panel]);
     PrintGrid();
@@ -1963,36 +1962,25 @@ void MySymbol()
 
 void Countdown()
 {
-  for(int i = 9; i >= 0; i--)
+  for (int i = 9; i >= 0; i--)
   {
     LoadPmemPanel(&numTable[MP_ROWS * i]);
     PrintGrid();
-    delay(1000);
+    delay(COUNTDOWN_DELAY_MS);
   }
 }
 
 void ShortCountdown()
 {
-  for(int i = 3; i >= 0; i--)
+  for (int i = 3; i >= 0; i--)
   {
     LoadPmemPanel(&numTable[MP_ROWS * i]);
     PrintGrid();
-    delay(1000);
+    delay(COUNTDOWN_DELAY_MS);
   }
 }
 #undef COUNTDOWN_DELAY_MS
 
-
-// Attempt to remove delay on the pattern functions
-// Currently failed so commented out.
-/*
-void waitTime(unsigned long waitTime){
-  unsigned long startTime = millis();            // get an updated time stamp
-  do {
-    // just wait around in a non-blocking fashion
-  } while (millis() <= startTime + waitTime);
-}
-*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // CheckerBoard (The Juggler)
@@ -2001,11 +1989,9 @@ void waitTime(unsigned long waitTime){
   
 void CheckerBoard(int Repeats, int FlashDelayMS)
 {
-  int i, j;
-  
-  for(i = 0; i < Repeats; i++)
+  for (int i = 0; i < Repeats; i++)
   {
-    for(j = 0; j < 2; j++)
+    for (int j = 0; j < 2; j++)
     {
       SetRow(j,   B11001100);
       SetRow(j+2, B00110011);
@@ -2014,7 +2000,7 @@ void CheckerBoard(int Repeats, int FlashDelayMS)
     }
     PrintGrid();
     delay(FlashDelayMS);
-    for(j = 0; j < 2; j++)
+    for (int j = 0; j < 2; j++)
     {
       SetRow(j,   B00110011);
       SetRow(j+2, B11001100);
@@ -2081,16 +2067,17 @@ void RandomAlert(int Repeats)
 
 void CompressExplode(int Repeats, enum PatternCompressExplodeMode Mode, enum PatternCommonFillOpt FillOpt, boolean RetroMode, boolean Rotate)
 {
-#define COMPRESS_IN_DELAY_MS 100
-  int i;
   int trow, brow, trow_start, brow_start;
   int trow_inc, brow_inc;
   byte row_half_t = B11110000;
   byte row_half_b = B00001111;
   byte row_full   = B11111111;
   void (*rowcolFn)(int, unsigned char);     // Fn ptr for the set row or col procedure
-  int frame_delay_ms = COMPRESS_IN_DELAY_MS;
+  int frame_delay_ms;
+
+#define COMPRESS_IN_DELAY_MS 100
   
+  frame_delay_ms = COMPRESS_IN_DELAY_MS;
   if (!RetroMode) // New style with whole rows? Keep cumulative per row time equal.
     frame_delay_ms = COMPRESS_IN_DELAY_MS * 2;
   
@@ -2118,9 +2105,9 @@ void CompressExplode(int Repeats, enum PatternCompressExplodeMode Mode, enum Pat
     trow = trow_start;
     brow = brow_start;
     
-    for (i = 0; i < MP_ROWS/2; i++)
+    for (int i = 0; i < MP_ROWS/2; i++)
     {
-      if(RetroMode) // Retro style with half rows?
+      if (RetroMode) // Retro style with half rows?
       {
         rowcolFn(trow, row_half_t);
         rowcolFn(brow, row_half_b);
@@ -2140,9 +2127,9 @@ void CompressExplode(int Repeats, enum PatternCompressExplodeMode Mode, enum Pat
       trow = trow_start;
       brow = brow_start;
       
-      for (i = 0; i < MP_ROWS/2; i++)
+      for (int i = 0; i < MP_ROWS/2; i++)
       {
-        if(RetroMode) // Retro style with half rows?
+        if (RetroMode) // Retro style with half rows?
         {
           rowcolFn(trow, ~row_half_t);
           rowcolFn(brow, ~row_half_b);
@@ -2173,35 +2160,34 @@ void CompressExplode(int Repeats, enum PatternCompressExplodeMode Mode, enum Pat
 
 void VUMeter(int Repeats, enum PatternVUMode Mode)
 {
-  int i;
   int level[8] = {0,0,0,0,0,0,0,0};  
 
 #define VUMETER_DELAY_MS 250
   
   // Set a default start level for each column.
-  for (i = 0; i < 8; i++)
+  for (int i = 0; i < 8; i++)
     level[i] = random(0,9);
 
   for (int reps = 0; reps < Repeats; reps++)
   {
     if (Mode == VUModeUp)
     {
-      for(i = 0; i < MP_COLS; i++)
+      for (int i = 0; i < MP_COLS; i++)
         SetCol(7-i, pgm_read_byte(&bargraph[level[i]]));
     }
     else if (Mode == VUModeLeft)
     {
-      for(i = 0; i < MP_ROWS; i++)
+      for (int i = 0; i < MP_ROWS; i++)
         SetRow(7-i, pgm_read_byte(&bargraph[level[i]]));
     }
     else if (Mode == VUModeDown)
     {
-      for(i = 0; i < MP_COLS; i++)
+      for (int i = 0; i < MP_COLS; i++)
         SetCol(7-i, pgm_read_byte(&bargraph[level[i]+8]));
     }
     else if (Mode == VUModeRight)
     {
-      for(i = 0; i < MP_ROWS; i++)
+      for (int i = 0; i < MP_ROWS; i++)
         SetRow(7-i, pgm_read_byte(&bargraph[level[i]+8]));
     }
     PrintGrid();
@@ -2209,7 +2195,7 @@ void VUMeter(int Repeats, enum PatternVUMode Mode)
     delay(VUMETER_DELAY_MS);
 
     // calc the next position of the bars
-    for (i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++)
     {
       byte upDown = random(0,2);
       byte changeSize = random(1,3);
@@ -2810,9 +2796,8 @@ void receiveEvent(int eventCode)
       Serial.print("Command too large. "); Serial.print(i2cCommandLen); Serial.println(" bytes.  Ignoring.");
     #endif
     for (int i = 0; i < i2cCommandLen; i++)
-    {
       Wire.read();
-    }
+
     return;
   }
 
@@ -2822,14 +2807,12 @@ void receiveEvent(int eventCode)
 
   for (int i = 0; i < i2cCommandLen; i++)
   {
-
     // First data should be the command type, it's a hex value / character
     if (i == 0)
     {
       i2cCommand = Wire.read();
     }
-    // Everything else should be int if it's a good JawaLite Command
-    else
+    else // Everything else should be int if it's a good JawaLite Command
     {
       i2cValue[i-1] = Wire.read();
       #ifdef DEBUG
@@ -2839,9 +2822,8 @@ void receiveEvent(int eventCode)
 
     // Don't seem to get the end character from MarcDuino, but for now leave this check as it is valid.
     if (i2cValue[i-1] == '\r')
-    {
       break;
-    }
+
     #ifdef DEBUG
       Serial.print("i2c loop ="); Serial.print(i2cCommand); Serial.print(i2cValue[0]); Serial.print(i2cValue[1]); Serial.println(i2cValue[2]); // debug
     #endif
@@ -2880,22 +2862,26 @@ void serialEvent()
 
     if (stringComplete == true)
     {
+      int code;
+      int jawaValue[3] = {0,0,0};
+      char jawaCommand;
+      
 #ifdef DEBUG
       Serial.print("In the eval... "); Serial.print(inputString);Serial.println('\r'); // debug
 #endif
 
+      // lostrebel says: commented out because len was never used or checked. TODO: delete or do some sanity checking with len
       // Get the length of the input string
-      int len = inputString.length();
+      // int len = inputString.length();
 
-      char jawaCommand = inputString[0];
+      jawaCommand = inputString[0];
       inputString.remove(0,1);
 
       // Since everything on serial comes in one block, assume everything is a single uint_8.
       // This might be a bad assumption.
-      int jawaValue[3] = {0,0,0};
       jawaValue[0] = inputString.toInt();
 
-      int code = decodeJawaCommand(jawaCommand, jawaValue);
+      code = decodeJawaCommand(jawaCommand, jawaValue);
 
       stringEvaluated = true;
 
@@ -2917,7 +2903,7 @@ void serialEvent()
     }
   }
   
-  sei(); // Why is there a lonely sei() here? Who called cli()?  (LostRebel)
+  sei(); // lostrebel asks: Why is there a lonely sei() here? Who called cli()?
 }
 
 
